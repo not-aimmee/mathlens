@@ -1,0 +1,32 @@
+The 8 EDA Plots Explained
+1. 01_class_distribution.png — Class Balance
+Shows how many samples exist per class (bar chart) + digits vs symbols (pie chart).
+Why it matters: If one class has far fewer samples, the model will perform worse on it. You'd need to add more data or use class weights.
+
+2. 02_sample_grid.png — Visual Sanity Check
+5 random images from every class, all 15 classes.
+Why it matters: You visually confirm the data loaded correctly and the synthetic math symbols look like real handwriting.
+
+3. 03_pixel_statistics.png — Intensity Stats per Class
+Mean pixel value, standard deviation, and ink coverage % per class.
+Why it matters: If a class has very low mean pixel value, those images might be too faint. High std = lots of writing variation.
+
+4. 04_mean_variance_images.png — Average Digit Shape
+The "average face" of each class (mean image) + where pixels vary most (variance image).
+Why it matters: You can spot if digits overlap visually (e.g., 1 vs / ) which would cause model confusion.
+
+5. 05_global_histogram.png — Pixel Brightness Distribution
+How bright pixels are across the entire dataset.
+Why it matters: The huge spike at 0 is the black background — normal. The right side shows the ink. Confirms images are properly black-on-white.
+
+6. 06_violin_per_class.png — Writing Density per Class
+Violin plot of how "filled in" each image is per class.
+Why it matters: Math symbols like − have very few ink pixels while 8 or × have many. This variation helps the model distinguish them.
+
+7. 07_sharpness_analysis.png — Image Quality Check
+Measures how sharp/crisp each image is using edge detection.
+Why it matters: Blurry images hurt accuracy. Math symbols generated with thin strokes may be sharper than thick digit strokes — this is expected and fine.
+
+8. 08_tsne_embedding.png — Cluster Visualisation (takes ~2 min)
+Projects all 90,000 images into 2D so you can see natural groupings.
+Why it matters: This is the most powerful EDA plot. If the classes form separate clusters → model will learn easily. If clusters overlap (e.g., 1 and −) → expect some confusion there.

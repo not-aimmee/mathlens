@@ -8,19 +8,16 @@ A CNN-based classifier that recognises **handwritten digits (0–9)** and
 ## Project Structure
 
 ```
-digit_math_recognizer/
+mathlens/
 │
-├── train.py            ← Full pipeline (run this first)
-├── predict.py          ← Inference module for the UI team
-├── explore_data.py     ← Visualise dataset samples
-├── requirements.txt    ← Python dependencies
+├── math_recognizer.py    ← Full pipeline (run this first)
+├── requirements.txt      ← Python dependencies
 │
-├── models/             ← Created after training
-│   ├── digit_math_recognizer.keras   ← Main model file
-│   ├── saved_model/                  ← TF SavedModel (TFLite ready)
-│   └── label_map.json                ← {0:"0", …, 14:"="}
+├── models/               ← Created after training
+│   ├── math_recognizer.keras   ← Main model file
+│   └── label_map.json          ← {0:"0", …, 17:"="}
 │
-└── outputs/            ← Created after training
+└── outputs/              ← Created after training
     ├── training_curves.png
     ├── confusion_matrix.png
     └── data_samples.png
@@ -37,12 +34,12 @@ pip install -r requirements.txt
 
 ### 2 — (Optional) Explore the data
 ```bash
-python explore_data.py
+python math_recognizer.py --eda
 ```
 
 ### 3 — Train the model
 ```bash
-python train.py
+python math_recognizer.py --train
 ```
 Training takes **~10 min on GPU** / ~45 min on CPU.
 After completion the `models/` folder contains everything your UI teammate needs.

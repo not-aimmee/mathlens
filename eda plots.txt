@@ -30,3 +30,12 @@ Why it matters: Blurry images hurt accuracy. Math symbols generated with thin st
 8. 08_tsne_embedding.png — Cluster Visualisation (takes ~2 min)
 Projects all 90,000 images into 2D so you can see natural groupings.
 Why it matters: This is the most powerful EDA plot. If the classes form separate clusters → model will learn easily. If clusters overlap (e.g., 1 and −) → expect some confusion there.
+
+
+
+ project/
+├── math_recognizer.py      ← the one file
+├── requirements.txt        ← dependencies
+└── models/
+    ├── math_recognizer.keras    ← trained model
+    └── label_map.json           ← label mapping

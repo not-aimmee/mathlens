@@ -39,3 +39,38 @@ Why it matters: This is the most powerful EDA plot. If the classes form separate
 └── models/
     ├── math_recognizer.keras    ← trained model
     └── label_map.json           ← label mapping
+
+
+
+    # 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Build the dataset (downloads MNIST + generates math symbols)
+python handmath.py build-dataset
+
+# 3. Run EDA — inspect the dataset before training
+python handmath.py eda
+#    → eda_output/class_distribution.png
+#    → eda_output/sample_grid.png
+#    → eda_output/pixel_intensity.png
+#    → eda_output/mean_images.png
+#    → eda_output/augmentation_preview.png
+
+# 4. Train the model  (~40 epochs, stops early if val_acc plateaus)
+python handmath.py train
+#    → handmath_model.keras
+#    → eda_output/confusion_matrix.png
+#    → eda_output/training_curves.png
+
+# 5. Test on a single image
+python handmath.py predict your_image.png
+
+# 6. Test the solver directly with text (no image needed)
+python handmath.py solve "x**2 + 5*x + 6 = 0"
+python handmath.py solve "sqrt(144) + 3^4"
+python handmath.py solve "2*x + 7 = 15"
+
+# 7. Start the REST API for your teammate
+python handmath.py serve
+#    → http://localhost:8000
+#    → http://localhost:8000/docs   (interactive Swagger UI)

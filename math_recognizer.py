@@ -159,34 +159,58 @@ def draw_power(size, rng):
 
 
 # ── LEFT PAREN  (() ──────────────────────────────────────────────
+# The key visual feature of ( is: bulges LEFT, opens RIGHT
+# We make the leftward bulge very pronounced and unmistakable
 def draw_lparen(size, rng):
-    img  = np.zeros((size,size), dtype=np.uint8)
-    style= _rnd(rng,0,1); th=_rnd(rng,2,4)
-    if style==0:
-        cx=size//2+_rnd(rng,2,8); cy=size//2+_rnd(rng,-3,3)
-        rx=_rnd(rng,int(size*0.16),int(size*0.26))
-        ry=_rnd(rng,int(size*0.32),int(size*0.42))
-        cv2.ellipse(img,(cx,cy),(rx,ry),0,110,250,255,th)
-    else:
-        t=_rnd(rng,int(size*0.22),int(size*0.35)); m=_rnd(rng,int(size*0.10),int(size*0.22)); b=size-t
-        pts=np.array([[size//2+_rnd(rng,0,6),t],[size//2-m+_rnd(rng,-3,3),size//2],[size//2+_rnd(rng,0,6),b]],dtype=np.int32)
-        cv2.polylines(img,[pts],False,255,th)
+    img = np.zeros((size,size), dtype=np.uint8)
+    th  = _rnd(rng, 2, 5)
+    n   = 30  # many points = smooth curve
+
+    # anchor points: top-right and bottom-right, bulge goes left
+    top_x  = size//2 + _rnd(rng, 4, 10)
+    top_y  = _rnd(rng, int(size*0.06), int(size*0.14))
+    bot_x  = top_x + _rnd(rng, -4, 4)
+    bot_y  = size - top_y + _rnd(rng, -4, 4)
+    # leftmost point of the bulge
+    mid_x  = _rnd(rng, int(size*0.08), int(size*0.22))
+    mid_y  = size//2 + _rnd(rng, -4, 4)
+
+    pts = []
+    for i in range(n+1):
+        t = i/n
+        # quadratic bezier: top -> mid -> bot
+        bx = int((1-t)**2*top_x + 2*(1-t)*t*mid_x + t**2*bot_x)
+        by = int((1-t)**2*top_y + 2*(1-t)*t*mid_y + t**2*bot_y)
+        pts.append([bx, by])
+    pts = np.array(pts, dtype=np.int32)
+    cv2.polylines(img, [pts], False, 255, th)
     return img
 
 
 # ── RIGHT PAREN  ()) ─────────────────────────────────────────────
+# The key visual feature of ) is: bulges RIGHT, opens LEFT
 def draw_rparen(size, rng):
-    img  = np.zeros((size,size), dtype=np.uint8)
-    style= _rnd(rng,0,1); th=_rnd(rng,2,4)
-    if style==0:
-        cx=size//2-_rnd(rng,2,8); cy=size//2+_rnd(rng,-3,3)
-        rx=_rnd(rng,int(size*0.16),int(size*0.26))
-        ry=_rnd(rng,int(size*0.32),int(size*0.42))
-        cv2.ellipse(img,(cx,cy),(rx,ry),0,290,70,255,th)
-    else:
-        t=_rnd(rng,int(size*0.22),int(size*0.35)); m=_rnd(rng,int(size*0.10),int(size*0.22)); b=size-t
-        pts=np.array([[size//2-_rnd(rng,0,6),t],[size//2+m+_rnd(rng,-3,3),size//2],[size//2-_rnd(rng,0,6),b]],dtype=np.int32)
-        cv2.polylines(img,[pts],False,255,th)
+    img = np.zeros((size,size), dtype=np.uint8)
+    th  = _rnd(rng, 2, 5)
+    n   = 30
+
+    # anchor points: top-left and bottom-left, bulge goes right
+    top_x  = size//2 - _rnd(rng, 4, 10)
+    top_y  = _rnd(rng, int(size*0.06), int(size*0.14))
+    bot_x  = top_x + _rnd(rng, -4, 4)
+    bot_y  = size - top_y + _rnd(rng, -4, 4)
+    # rightmost point of the bulge
+    mid_x  = size - _rnd(rng, int(size*0.08), int(size*0.22))
+    mid_y  = size//2 + _rnd(rng, -4, 4)
+
+    pts = []
+    for i in range(n+1):
+        t = i/n
+        bx = int((1-t)**2*top_x + 2*(1-t)*t*mid_x + t**2*bot_x)
+        by = int((1-t)**2*top_y + 2*(1-t)*t*mid_y + t**2*bot_y)
+        pts.append([bx, by])
+    pts = np.array(pts, dtype=np.int32)
+    cv2.polylines(img, [pts], False, 255, th)
     return img
 
 
@@ -229,10 +253,46 @@ def draw_seven(size, rng):
     return img
 
 
+def draw_six(size, rng):
+    """6 = circle at bottom + vertical stroke coming down from top-right."""
+    img = np.zeros((size,size), dtype=np.uint8)
+    th  = _rnd(rng, 2, 4)
+    # bottom circle
+    cx  = size//2 + _rnd(rng,-3,3)
+    cy  = size//2 + _rnd(rng,4,10)
+    r   = _rnd(rng, int(size*0.22), int(size*0.30))
+    cv2.circle(img,(cx,cy),r,255,th)
+    # vertical stroke from top curving into circle
+    top_x = cx + r - _rnd(rng,2,6)
+    top_y = _rnd(rng, int(size*0.08), int(size*0.18))
+    cv2.line(img,(top_x,top_y),(cx+r,cy),255,th)
+    return img
+
+
+def draw_nine(size, rng):
+    """9 = circle at top + vertical stroke going down from bottom-left."""
+    img = np.zeros((size,size), dtype=np.uint8)
+    th  = _rnd(rng, 2, 4)
+    # top circle
+    cx  = size//2 + _rnd(rng,-3,3)
+    cy  = size//2 - _rnd(rng,4,10)
+    r   = _rnd(rng, int(size*0.22), int(size*0.30))
+    cv2.circle(img,(cx,cy),r,255,th)
+    # vertical stroke going down
+    bot_x = cx + r - _rnd(rng,2,6)
+    bot_y = size - _rnd(rng, int(size*0.08), int(size*0.18))
+    cv2.line(img,(cx+r,cy),(bot_x,bot_y),255,th)
+    return img
+
+
 def draw_digit(digit, size, rng):
-    """Render digit using font (+ geometry for 7 which confuses with +)."""
+    """Render digit. Problem digits use geometry to avoid confusion."""
     if digit == 7:
         return draw_seven(size, rng)
+    if digit == 6:
+        return draw_six(size, rng)
+    if digit == 9:
+        return draw_nine(size, rng)
     img = np.zeros((size,size), dtype=np.uint8)
     F   = cv2.FONT_HERSHEY_SIMPLEX
     fs  = _rndf(rng, 0.9, 1.7)
@@ -325,8 +385,12 @@ def generate_all(n_digit=7000, n_symbol=15000):
     imgs, labels = [], []
 
     # digits — how many extra samples per digit
-    DIGIT_BOOST = {7: 3.0}   # 7 gets 3x because it looks like +
-    print(f"[DATA] Generating digits ({n_digit:,}/class, 7 gets 3x) ...")
+    DIGIT_BOOST = {
+        6: 2.0,   # 6 confused with 0
+        7: 3.0,   # 7 confused with +
+        9: 2.0,   # 9 confused with 0
+    }
+    print(f"[DATA] Generating digits ({n_digit:,}/class, 6/7/9 boosted) ...")
     for d in range(10):
         count = int(n_digit * DIGIT_BOOST.get(d, 1.0))
         for _ in range(count):
@@ -340,6 +404,8 @@ def generate_all(n_digit=7000, n_symbol=15000):
         10: 3.0,   # +  gets 3x (most confused with 7)
         11: 1.5,   # -  gets 1.5x
         13: 1.5,   # /  gets 1.5x
+        15: 3.0,   # (  gets 3x (was reading as 1)
+        16: 2.0,   # )  gets 2x
         17: 1.5,   # =  gets 1.5x
     }
     print(f"[DATA] Generating symbols ({n_symbol:,}/class, + gets 3x) ...")
@@ -411,10 +477,14 @@ def get_class_weights(y_raw):
     total   = len(y_raw)
     # per-class manual boost for the hardest pairs
     BOOST = {
+        6:  2.0,   # digit 6  — confused with 0
         7:  3.0,   # digit 7  — confused with +
+        9:  2.0,   # digit 9  — confused with 0
         10: 3.0,   # +        — confused with 7
         11: 2.0,   # -        — confused with =
         13: 2.0,   # /        — confused with 1
+        15: 4.0,   # (        — was reading as 1
+        16: 3.0,   # )        — needs boost
         17: 2.0,   # =        — confused with -
     }
     weights = {}
@@ -593,6 +663,12 @@ def classify(model, binary, boxes, pad=6):
                 for i in top3:
                     if LABEL_MAP[i] in ("-","="):
                         idx,conf,label=i,float(probs[i]),LABEL_MAP[i]; break
+            elif aspect < 0.55:            # tall & narrow -> ( or )
+                for i in top3:
+                    if LABEL_MAP[i] in ("(",")",'1'):
+                        # pick ( or ) over 1 if they appear in top3
+                        if LABEL_MAP[i] in ("(",")" ):
+                            idx,conf,label=i,float(probs[i]),LABEL_MAP[i]; break
             elif 0.65 < aspect < 1.5:      # squarish -> maybe x
                 for i in top3:
                     if LABEL_MAP[i]=="x" and probs[i]>0.20:

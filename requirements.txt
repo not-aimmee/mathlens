@@ -1,7 +1,13 @@
 # Core dependencies
-anthropic>=0.25.0        # Anthropic Python SDK (optional — solver.py falls back to urllib)
-sympy>=1.12              # Symbolic math engine
-opencv-python>=4.9.0     # Image preprocessing
-Pillow>=10.0.0           # Image I/O support
-numpy>=1.26.0            # Array ops (used by OpenCV)
-requests>=2.31.0         # HTTP client (optional — solver.py falls back to urllib)
+anthropic>=0.25.0
+sympy>=1.12
+opencv-python>=4.9.0
+Pillow>=10.0.0
+numpy>=1.26.0
+requests>=2.31.0
+
+# UI (IMPORTANT - pinned versions)
+gradio==4.44.1
+huggingface_hub==0.23.5
+fastapi==0.110.0
+uvicorn==0.27.1

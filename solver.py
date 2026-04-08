@@ -33,6 +33,7 @@ import json
 import os
 import re
 import textwrap
+import time
 from pathlib import Path
 from typing import Any
 
@@ -64,6 +65,9 @@ except ImportError:
 GEMINI_API_URL    = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent"
 
 MAX_TOKENS = 1024
+RETRYABLE_STATUS = {429, 502, 503, 504}
+MAX_HTTP_RETRIES = 4
+BASE_RETRY_DELAY = 2.0
 
 TRANSFORMATIONS = standard_transformations + (
     implicit_multiplication_application,
@@ -95,7 +99,38 @@ class ImagePreprocessor:
     """Enhance a handwritten math image for best vision-model results."""
 
     @staticmethod
+    def _find_alternative_path(path: Path) -> Path | None:
+        if path.exists():
+            return path
+
+        root = path.with_suffix("")
+        candidates = []
+        if path.suffix:
+            candidates.append(root)
+        candidates.extend([root.with_suffix(ext) for ext in [".png", ".jpg", ".jpeg", ".bmp", ".webp"]])
+
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+
+        cwd_candidate = Path.cwd() / path.name
+        if cwd_candidate.exists():
+            return cwd_candidate
+
+        for ext in [".png", ".jpg", ".jpeg", ".bmp", ".webp"]:
+            candidate = cwd_candidate.with_suffix(ext)
+            if candidate.exists():
+                return candidate
+
+        return None
+
+    @staticmethod
     def load(path):
+        path = Path(path)
+        fallback = ImagePreprocessor._find_alternative_path(path)
+        if fallback is not None:
+            path = fallback
+
         img = cv2.imread(str(path))
         if img is None:
             raise FileNotFoundError(f"Cannot read image: {path}")
@@ -171,16 +206,45 @@ class ImagePreprocessor:
 # ---------------------------------------------------------------------------
 
 def _post(url, headers, payload):
-    if _HAS_REQUESTS:
-        resp = _requests.post(url, headers=headers, json=payload, timeout=60)
-        if not resp.ok:
-            raise RuntimeError(f"API error {resp.status_code}: {resp.text}")
-        return resp.json()
-    else:
-        body = json.dumps(payload).encode()
-        req  = _urllib_request.Request(url, data=body, headers=headers, method="POST")
-        with _urllib_request.urlopen(req, timeout=60) as r:
-            return json.loads(r.read())
+    body = json.dumps(payload).encode()
+    attempt = 0
+
+    while True:
+        try:
+            if _HAS_REQUESTS:
+                resp = _requests.post(url, headers=headers, json=payload, timeout=60)
+                status_code = resp.status_code
+                text = resp.text
+            else:
+                req = _urllib_request.Request(url, data=body, headers=headers, method="POST")
+                with _urllib_request.urlopen(req, timeout=60) as r:
+                    status_code = r.getcode()
+                    text = r.read().decode('utf-8')
+
+            if 200 <= status_code < 300:
+                return json.loads(text) if not _HAS_REQUESTS else resp.json()
+
+            if status_code in RETRYABLE_STATUS and attempt < MAX_HTTP_RETRIES:
+                attempt += 1
+                delay = BASE_RETRY_DELAY * (2 ** (attempt - 1))
+                time.sleep(delay)
+                continue
+
+            raise RuntimeError(f"API error {status_code}: {text}")
+
+        except Exception as exc:
+            retriable_exc = False
+            if _HAS_REQUESTS and isinstance(exc, _requests.exceptions.RequestException):
+                retriable_exc = True
+            elif not _HAS_REQUESTS and isinstance(exc, (_urllib_error.HTTPError, _urllib_error.URLError)):
+                retriable_exc = True
+
+            if retriable_exc and attempt < MAX_HTTP_RETRIES:
+                attempt += 1
+                delay = BASE_RETRY_DELAY * (2 ** (attempt - 1))
+                time.sleep(delay)
+                continue
+            raise
 
 
 # ---------------------------------------------------------------------------
